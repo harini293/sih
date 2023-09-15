@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karnataka</title>
+    <link rel="stylesheet" href="../static/css/indexstyle.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        /* CSS for the map container */
+        #map-container {
+            height: calc(100vh - 50px); /* Adjust the 50px to match your navigation bar's height */
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation bar (copied from your home page) -->
+    <nav>
+        <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Map container -->
+    <div id="map" style="height: 500px;"></div>
+
+    <!-- JavaScript for the map -->
+    <script>
+        var map = L.map('map').setView([13.3419, 77.1010], 13); // Centered on Tumkur, Karnataka
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var markers = L.layerGroup().addTo(map);
+        var currentMarker = null;
+
+        function addMarker(e) {
+            if (currentMarker) {
+                markers.removeLayer(currentMarker); // Remove the previous marker
+            }
+            currentMarker = L.marker(e.latlng).addTo(markers);
+
+            //send coordinates to flask route
+            var coordinates = { lat: e.latlng.lat, lng: e.latlng.lng };
+            sendCoordinatesToFlask(coordinates);
+        }
+        
+        function sendCoordinatesToFlask(coordinates) {
+            fetch('/save_coordinates', {
+                method: 'POST', // You can use GET or POST as needed
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(coordinates)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle the response from the Flask route if needed
+                console.log('Response from Flask:', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+}
+
+        map.on('click', addMarker);
+    </script>
+</body>
+</html>
